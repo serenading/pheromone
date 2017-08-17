@@ -1,0 +1,9 @@
+/Volumes/behavgenom_archive$/Serena/pheromones/Results/daf22_12_Ch1_30062017_125755_comp1_skeletons.hdf5
+/Volumes/behavgenom_archive$/Serena/pheromones/Results/daf22_13_Ch1_30062017_140013_comp3_skeletons.hdf5
+/Volumes/behavgenom_archive$/Serena/pheromones/Results/daf22_14_Ch1_30062017_140123_comp2_skeletons.hdf5
+/Volumes/behavgenom_archive$/Serena/pheromones/Results/daf22_18_Ch1_30062017_153346_comp1_skeletons.hdf5
+/Volumes/behavgenom_archive$/Serena/pheromones/Results/daf22_19_Ch1_30062017_164332_comp3_skeletons.hdf5
+/Volumes/behavgenom_archive$/Serena/pheromones/Results/daf22_20_Ch1_30062017_164443_comp2_skeletons.hdf5
+/Volumes/behavgenom_archive$/Serena/pheromones/Results/daf22_22_Ch1_03072017_151046_comp3_skeletons.hdf5
+/Volumes/behavgenom_archive$/Serena/pheromones/Results/daf22_23_Ch1_03072017_151156_comp2_skeletons.hdf5
+/Volumes/behavgenom_archive$/Serena/pheromones/Results/daf22_27_Ch1_03072017_164608_comp1_skeletons.hdf5
