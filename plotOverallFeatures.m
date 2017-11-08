@@ -53,7 +53,6 @@ for strainCtr = 1:length(strains)
         multiWormLogInd = logical(~trajData.is_good_skel);
         perimeter{fileCtr} = blobFeats.perimeter(multiWormLogInd);
         area{fileCtr} = blobFeats.area(multiWormLogInd);
-        blobIndex = trajData.worm_index_joined(multiWormLogInd);
         
         %% calculate worm skeleton length (as daf-22 containing animals appear smaller) to normalise features against later
         % load xy coordinates
