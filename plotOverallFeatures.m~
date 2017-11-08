@@ -3,7 +3,7 @@ close all
 
 exportOptions = struct('Format','eps2',...
     'Color','rgb',...
-    'Width',15,...
+    'Width',10,...
     'Resolution',300,...
     'FontMode','fixed',...
     'FontSize',12,...
@@ -53,7 +53,6 @@ for strainCtr = 1:length(strains)
         multiWormLogInd = logical(~trajData.is_good_skel);
         perimeter{fileCtr} = blobFeats.perimeter(multiWormLogInd);
         area{fileCtr} = blobFeats.area(multiWormLogInd);
-        blobIndex = trajData.worm_index_joined(multiWormLogInd);
         
         %% calculate worm skeleton length (as daf-22 containing animals appear smaller) to normalise features against later
         % load xy coordinates
@@ -65,7 +64,7 @@ for strainCtr = 1:length(strains)
         ycoords = ycoords(:,singleWormLogInd);
         singleWormArea = blobFeats.area(singleWormLogInd);
         singleWormPerimeter = blobFeats.perimeter(singleWormLogInd);
-        % extract single worm features and calculate skeleton length
+        % calculate skeleton length
         [~,sampleSkelIdx] = datasample(1:size(xcoords,2),numSampleSkel,'Replace',false); % sample 500 random single worm skeletons
         xcoords = xcoords(:,sampleSkelIdx);
         ycoords = ycoords(:,sampleSkelIdx); 
@@ -140,9 +139,8 @@ ylabel('probability')
 set(swLengthFig,'PaperUnits','centimeters')
 figurename = 'figures/swLength';
 if saveResults
+    savefig(swLengthFig,[figurename '.fig'])
     exportfig(swLengthFig,[figurename '.eps'],exportOptions)
-    system(['epstopdf ' figurename '.eps']);
-    system(['rm ' figurename '.eps']);
 end
 
 set(0,'CurrentFigure',swWidthFig)
@@ -152,9 +150,8 @@ ylabel('probability')
 set(swWidthFig,'PaperUnits','centimeters')
 figurename = 'figures/swWidth';
 if saveResults
+
     exportfig(swWidthFig,[figurename '.eps'],exportOptions)
-    system(['epstopdf ' figurename '.eps']);
-    system(['rm ' figurename '.eps']);
 end
 
 set(0,'CurrentFigure',swAreaFig)
