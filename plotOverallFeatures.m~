@@ -10,9 +10,9 @@ exportOptions = struct('Format','eps2',...
     'LineWidth',1);
 
 %% set parameters
-strains = {'N2','npr1','daf22','daf22_npr1'}; % {'N2','npr1','daf22','daf22_npr1'}
+strains = {'npr1'}%{'N2','npr1','daf22','daf22_npr1'}; % {'N2','npr1','daf22','daf22_npr1'}
 numSampleSkel = 500; % number of skeletons (per file) to sample in order to determine overall skeleton lengths for normalisation
-saveResults = true;
+saveResults = false;
 
 %% initialise
 swLengthFig = figure; hold on
@@ -40,7 +40,7 @@ for strainCtr = 1:length(strains)
     swAreas.(strains{strainCtr}) = NaN(numFiles,numSampleSkel);
 
     %% go through individual movies
-    for fileCtr = 1:numFiles
+    for fileCtr = 1%:numFiles
         
         %% load data
         filename = filenames{fileCtr};
@@ -152,7 +152,7 @@ if saveResults
     save(filename,'swLengths','swWidths','swAreas','swPerimeters','area','perimeter','area1','area2','perimeter1','perimeter2')
 end
 
-if numel(legendList) == 4 & strcmp(legendList{4},'daf22_npr1')
+if strcmp(legendList{4},'daf22_npr1')
     legendList{4} = 'daf22\_npr1'; % add back slash so n doesn't become subscript
 else
     warning('need to rename daf22_npr1 to avoid subscript appearance in legend')
