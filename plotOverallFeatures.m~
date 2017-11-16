@@ -5,8 +5,6 @@ close all
 %%% (normalised file by file so each movie is a separate replicate to provide variation), ...
 %%% rather than pooling everything together across movies and plot a single line for each strain
 
-%%% phase-restrict movies to joining phase only
-
 exportOptions = struct('Format','eps2',...
     'Color','rgb',...
     'Width',15,...
@@ -20,7 +18,7 @@ strains = {'npr1','daf22_npr1','N2','daf22',}; % {'N2','npr1','daf22','daf22_npr
 numSampleSkel = 500; % number of skeletons (per file) to sample in order to determine overall skeleton lengths for normalisation
 areaCutOff = 5; % 5 seems good
 perimeterCutOff = 2.5; % 2.5 seems good
-saveResults = true;
+saveResults = false;
 
 %% initialise
 swLengthFig = figure; hold on
@@ -106,7 +104,16 @@ for strainCtr = 1:length(strains)
         
     end
     
+    test = figure; hold on
+    ylim([0 0.5])
+    strainCtr = 4;
+    for fileCtr = 1:numFiles
+        set(0,'CurrentFigure',test)
+        histogram(areaNorm.(strains{strainCtr}){fileCtr},'Normalization','pdf','DisplayStyle','stairs','EdgeColor','r')
+    end
 
+        
+    
 %     %% pool data across movies
 %     swLength = median(swLengths.(strains{strainCtr})(:));
 %     swWidth = median(swWidths.(strains{strainCtr})(:));
