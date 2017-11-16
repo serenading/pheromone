@@ -10,16 +10,10 @@ exportOptions = struct('Format','eps2',...
     'LineWidth',3);
 
 %% set parameters
-<<<<<<< HEAD
 strains = {'npr1','daf22_npr1','N2','daf22',}; % {'N2','npr1','daf22','daf22_npr1'}
 numSampleSkel = 500; % number of skeletons (per file) to sample in order to determine overall skeleton lengths for normalisation
-areaCutOff = 8;
-perimeterCutOff = 3.5;
-
-=======
-strains = {'N2','npr1','daf22','daf22_npr1'}; % {'N2','npr1','daf22','daf22_npr1'}
-numSampleSkel = 500; % number of skeletons (per file) to sample in order to determine overall skeleton lengths for normalisation
->>>>>>> 6bedd99e2e05fe7c807cd6b8e5efeeda179544a1
+areaCutOff = 2;
+perimeterCutOff = 3;
 saveResults = true;
 
 %% initialise
@@ -27,17 +21,10 @@ swLengthFig = figure; hold on
 swWidthFig = figure; hold on
 swPerimeterFig = figure; hold on
 swAreaFig = figure; hold on
-<<<<<<< HEAD
 perimeterFig = figure; hold on
 areaFig = figure; hold on
 perimeterThresholdFig = figure;
 areaThresholdFig = figure;
-=======
-perimeter1Fig = figure; hold on
-perimeter2Fig = figure; hold on
-area1Fig = figure; hold on
-area2Fig = figure; hold on
->>>>>>> 6bedd99e2e05fe7c807cd6b8e5efeeda179544a1
 
 %% go through strains, densities, movies
 for strainCtr = 1:length(strains)
@@ -49,11 +36,9 @@ for strainCtr = 1:length(strains)
     numFiles = length(filenames);
     perimeter = cell(numFiles,1);
     area = cell(numFiles,1);
-<<<<<<< HEAD
     perimeterThres.(strains{strainCtr}) = NaN(1,numFiles);
     areaThres.(strains{strainCtr}) = NaN(1,numFiles);
-=======
->>>>>>> 6bedd99e2e05fe7c807cd6b8e5efeeda179544a1
+
     swLengths.(strains{strainCtr}) =  NaN(numFiles,numSampleSkel); 
     swWidths.(strains{strainCtr}) = NaN(numFiles,numSampleSkel);
     swPerimeters.(strains{strainCtr}) = NaN(numFiles,numSampleSkel);
@@ -102,7 +87,6 @@ for strainCtr = 1:length(strains)
             swWidths.(strains{strainCtr})(fileCtr,skelCtr) = swAreas.(strains{strainCtr})(fileCtr,skelCtr)...
                 /swLengths.(strains{strainCtr})(fileCtr,skelCtr);
         end
-<<<<<<< HEAD
         
         %% normalise area and perimeter from this movie with sw features from this movie; store value for threshold box plot later
         perimeterThres.(strains{strainCtr})(fileCtr) = numel(find(perimeter{fileCtr}/median(swPerimeters.(strains{strainCtr})(fileCtr,:))>perimeterCutOff))/numel(perimeter{fileCtr});
@@ -120,23 +104,6 @@ for strainCtr = 1:length(strains)
    %% use worm skeleton lengths to normalise blob features
     perimeter = perimeter/swPerimeter;
     area = area/swArea;
-=======
-    end
-    
-    %% pool feature data across movies
-    perimeter = vertcat(perimeter{:});
-    area = vertcat(area{:});
-    swLength = median(swLengths.(strains{strainCtr})(:));
-    swWidth = median(swWidths.(strains{strainCtr})(:));
-    swArea = median(swAreas.(strains{strainCtr})(:));
-    swPerimeter = median(swPerimeters.(strains{strainCtr})(:));
-    
-    %% use worm skeleton lengths to normalise blob features
-    perimeter1 = perimeter/swLength;
-    perimeter2 = perimeter/swPerimeter;
-    area1 = area/swLength;
-    area2 = area/swArea;
->>>>>>> 6bedd99e2e05fe7c807cd6b8e5efeeda179544a1
 
     %% plot figures
     set(0,'CurrentFigure',swLengthFig)
@@ -148,7 +115,6 @@ for strainCtr = 1:length(strains)
     set(0,'CurrentFigure',swPerimeterFig)
     histogram(swPerimeters.(strains{strainCtr}),'Normalization','pdf','DisplayStyle','stairs')
     
-<<<<<<< HEAD
     set(0,'CurrentFigure',perimeterFig)
     histogram(perimeter,'Normalization','pdf','DisplayStyle','stairs')
     set(0,'CurrentFigure',areaFig)
@@ -267,124 +233,3 @@ end
 %     system(['epstopdf ' figurename '.eps']);
 %     system(['rm ' figurename '.eps']);
 % end
-=======
-    set(0,'CurrentFigure',perimeter1Fig)
-    histogram(perimeter1,'Normalization','pdf','DisplayStyle','stairs')
-    set(0,'CurrentFigure',perimeter2Fig)
-    histogram(perimeter2,'Normalization','pdf','DisplayStyle','stairs')
-    set(0,'CurrentFigure',area1Fig)
-    histogram(area1,'Normalization','pdf','DisplayStyle','stairs')
-    set(0,'CurrentFigure',area2Fig)
-    histogram(area2,'Normalization','pdf','DisplayStyle','stairs')
-end
-
-%% save results
-
-if saveResults
-    filename = 'figures/singleWormDimensions.mat';
-    save(filename,'swLengths','swWidths','swAreas','swPerimeters')
-end
-
-if strcmp(legendList{4},'daf22_npr1')
-    legendList{4} = 'daf22\_npr1'; % add back slash so n doesn't become subscript
-else
-    warning('need to rename daf22_npr1 to avoid subscript appearance in legend')
-end
-
-%% format and save figures
-set(0,'CurrentFigure',swLengthFig)
-legend(legendList)
-xlabel('single worm length')
-ylabel('probability')
-set(swLengthFig,'PaperUnits','centimeters')
-figurename = 'figures/swLength';
-if saveResults
-    exportfig(swLengthFig,[figurename '.eps'],exportOptions)
-    system(['epstopdf ' figurename '.eps']);
-    system(['rm ' figurename '.eps']);
-end
-
-set(0,'CurrentFigure',swWidthFig)
-legend(legendList)
-xlabel('single worm width')
-ylabel('probability')
-set(swWidthFig,'PaperUnits','centimeters')
-figurename = 'figures/swWidth';
-if saveResults
-    exportfig(swWidthFig,[figurename '.eps'],exportOptions)
-    system(['epstopdf ' figurename '.eps']);
-    system(['rm ' figurename '.eps']);
-end
-
-set(0,'CurrentFigure',swAreaFig)
-legend(legendList)
-xlabel('single worm area')
-ylabel('probability')
-set(swAreaFig,'PaperUnits','centimeters')
-figurename = 'figures/swArea';
-if saveResults
-    exportfig(swWidthFig,[figurename '.eps'],exportOptions)
-    system(['epstopdf ' figurename '.eps']);
-    system(['rm ' figurename '.eps']);
-end
-
-set(0,'CurrentFigure',swPerimeterFig)
-legend(legendList)
-xlabel('single worm perimeter')
-ylabel('probability')
-set(swPerimeterFig,'PaperUnits','centimeters')
-figurename = 'figures/swPerimeter';
-if saveResults
-    exportfig(swPerimeterFig,[figurename '.eps'],exportOptions)
-    system(['epstopdf ' figurename '.eps']);
-    system(['rm ' figurename '.eps']);
-end
-
-set(0,'CurrentFigure',perimeter1Fig)
-legend(legendList)
-xlabel('perimeter(normalised by swLength)')
-ylabel('probability')
-xlim([0 20])
-figurename = 'figures/perimeter1';
-if saveResults
-    exportfig(perimeter1Fig,[figurename '.eps'],exportOptions)
-    system(['epstopdf ' figurename '.eps']);
-    system(['rm ' figurename '.eps']);
-end
-
-set(0,'CurrentFigure',perimeter2Fig)
-legend(legendList)
-xlabel('perimeter(normalised by swPerimeter)')
-ylabel('probability')
-xlim([0 20])
-figurename = 'figures/perimeter2';
-if saveResults
-    exportfig(perimeter2Fig,[figurename '.eps'],exportOptions)
-    system(['epstopdf ' figurename '.eps']);
-    system(['rm ' figurename '.eps']);
-end
-
-set(0,'CurrentFigure',area1Fig)
-legend(legendList)
-xlabel('area(normalised by swLength)')
-ylabel('probability')
-xlim([0 120])
-figurename = 'figures/area1';
-if saveResults
-    exportfig(area1Fig,[figurename '.eps'],exportOptions)
-    system(['epstopdf ' figurename '.eps']);
-    system(['rm ' figurename '.eps']);
-end
-
-set(0,'CurrentFigure',area2Fig)
-legend(legendList)
-xlabel('area2 (normalised by swArea)')
-ylabel('probability')
-xlim([0 20])
-figurename = 'figures/area2';
-if saveResults
-    exportfig(area2Fig,[figurename '.eps'],exportOptions)
-    system(['epstopdf ' figurename '.eps']);
-    system(['rm ' figurename '.eps']);
-end
->>>>>>> 6bedd99e2e05fe7c807cd6b8e5efeeda179544a1
