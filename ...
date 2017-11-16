@@ -1,0 +1,14 @@
+Unstaged changes after reset:
+M	calculateNumBlobs.m
+M	figures/area1.pdf
+M	figures/area2.pdf
+D	figures/numBlobs.mat
+D	figures/numBlobs.pdf
+M	figures/perimeter1.pdf
+M	figures/perimeter2.pdf
+M	figures/singleWormDimensions.mat
+M	figures/swArea.pdf
+M	figures/swLength.pdf
+M	figures/swPerimeter.pdf
+M	figures/swWidth.pdf
+M	plotOverallFeatures.m

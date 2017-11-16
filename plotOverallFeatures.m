@@ -32,8 +32,8 @@ for strainCtr = 1:length(strains)
     
     %% initialise
     numFiles = length(filenames);
-    perimeter.(strains{strainCtr}) = cell(numFiles,1);
-    area.(strains{strainCtr}) = cell(numFiles,1);
+    perimeter = cell(numFiles,1);
+    area = cell(numFiles,1);
     swLengths.(strains{strainCtr}) =  NaN(numFiles,numSampleSkel); 
     swWidths.(strains{strainCtr}) = NaN(numFiles,numSampleSkel);
     swPerimeters.(strains{strainCtr}) = NaN(numFiles,numSampleSkel);
@@ -48,38 +48,11 @@ for strainCtr = 1:length(strains)
         blobFeats = h5read(filename,'/blob_features');
         skelData = h5read(filename,'/skeleton');
         frameRate = double(h5readatt(filename,'/plate_worms','expected_fps'));
-        features = h5read(strrep(filename,'_skeletons','_features'),'/features_timeseries');
         
+        %% obtain features, filtering out single worms
         multiWormLogInd = logical(~trajData.is_good_skel);
-
-        %% use changes in blob centroid to filter out debris
-        blob_index = trajData.worm_index_joined(multiWormLogInd);
-        uniqueBlobs = unique(blob_index);
-        numBlobs = numel(uniqueBlobs);
-        blob_xcoords = blobFeats.coord_x(multiWormLogInd);
-        blob_ycoords = blobFeats.coord_y(multiWormLogInd);
-        blobCentroidRange = NaN(1,numBlobs);
-        blobPerdurance = NaN(1,numBlobs);
-        for blobCtr = 1:numBlobs
-            blobIdx = uniqueBlobs(blobCtr);
-            thisBlobLogInd = blob_index == blobIdx;
-            thisBlob_xcoords = blob_xcoords(thisBlobLogInd);
-            thisBlob_ycoords = blob_ycoords(thisBlobLogInd);
-            blobCentroidRange(blobCtr) = (max(thisBlob_xcoords)-min(thisBlob_xcoords))^2+(max(thisBlob_ycoords)-min(thisBlob_ycoords))^2;
-            blobPerdurance(blobCtr) = numel(trajData.frame_number(thisBlobLogInd));
-        end
-        lowBlobRangeLogInd = blobCentroidRange<10 & blobPerdurance>(frameRate*10);
-        debrisBlobs = uniqueBlobs(lowBlobRangeLogInd);
-        trajData.debrisFilter = false(size(trajData.worm_index_joined));
-        for debrisBlobCtr = 1:numel(debrisBlobs)
-            thisDebrisBlob = debrisBlobs(debrisBlobCtr);
-            thisDebrisBlobLogInd = trajData.worm_index_joined == thisDebrisBlob;
-            trajData.debrisFilter(thisDebrisBlobLogInd) = true;
-        end
-        
-        %% obtain features, filtering out single worms and debris
-        perimeter.(strains{strainCtr}){fileCtr} = blobFeats.perimeter(multiWormLogInd & ~trajData.debrisFilter);
-        area.(strains{strainCtr}){fileCtr} = blobFeats.area(multiWormLogInd & ~trajData.debrisFilter);
+        perimeter{fileCtr} = blobFeats.perimeter(multiWormLogInd);
+        area{fileCtr} = blobFeats.area(multiWormLogInd);
         
         %% calculate worm skeleton length (as daf-22 containing animals appear smaller) to normalise features against later
         % load xy coordinates
@@ -112,18 +85,18 @@ for strainCtr = 1:length(strains)
     end
     
     %% pool feature data across movies
-    perimeter.(strains{strainCtr}) = vertcat(perimeter.(strains{strainCtr}){:});
-    area.(strains{strainCtr}) = vertcat(area.(strains{strainCtr}){:});
+    perimeter = vertcat(perimeter{:});
+    area = vertcat(area{:});
     swLength = median(swLengths.(strains{strainCtr})(:));
     swWidth = median(swWidths.(strains{strainCtr})(:));
     swArea = median(swAreas.(strains{strainCtr})(:));
     swPerimeter = median(swPerimeters.(strains{strainCtr})(:));
     
     %% use worm skeleton lengths to normalise blob features
-    perimeter1.(strains{strainCtr}) = perimeter.(strains{strainCtr})/swLength;
-    perimeter2.(strains{strainCtr}) = perimeter.(strains{strainCtr})/swPerimeter;
-    area1.(strains{strainCtr}) = area.(strains{strainCtr})/swLength;
-    area2.(strains{strainCtr}) = area.(strains{strainCtr})/swArea;
+    perimeter1 = perimeter/swLength;
+    perimeter2 = perimeter/swPerimeter;
+    area1 = area/swLength;
+    area2 = area/swArea;
 
     %% plot figures
     set(0,'CurrentFigure',swLengthFig)
@@ -136,23 +109,23 @@ for strainCtr = 1:length(strains)
     histogram(swPerimeters.(strains{strainCtr}),'Normalization','pdf','DisplayStyle','stairs')
     
     set(0,'CurrentFigure',perimeter1Fig)
-    histogram(perimeter1.(strains{strainCtr}),'Normalization','pdf','DisplayStyle','stairs')
+    histogram(perimeter1,'Normalization','pdf','DisplayStyle','stairs')
     set(0,'CurrentFigure',perimeter2Fig)
-    histogram(perimeter2.(strains{strainCtr}),'Normalization','pdf','DisplayStyle','stairs')
+    histogram(perimeter2,'Normalization','pdf','DisplayStyle','stairs')
     set(0,'CurrentFigure',area1Fig)
-    histogram(area1.(strains{strainCtr}),'Normalization','pdf','DisplayStyle','stairs')
+    histogram(area1,'Normalization','pdf','DisplayStyle','stairs')
     set(0,'CurrentFigure',area2Fig)
-    histogram(area2.(strains{strainCtr}),'Normalization','pdf','DisplayStyle','stairs')
+    histogram(area2,'Normalization','pdf','DisplayStyle','stairs')
 end
 
 %% save results
 
 if saveResults
     filename = 'figures/singleWormDimensions.mat';
-    save(filename,'swLengths','swWidths','swAreas','swPerimeters','area','perimeter','area1','area2','perimeter1','perimeter2')
+    save(filename,'swLengths','swWidths','swAreas','swPerimeters')
 end
 
-if numel(legendList) == 4 & strcmp(legendList{4},'daf22_npr1')
+if strcmp(legendList{4},'daf22_npr1')
     legendList{4} = 'daf22\_npr1'; % add back slash so n doesn't become subscript
 else
     warning('need to rename daf22_npr1 to avoid subscript appearance in legend')
@@ -223,7 +196,7 @@ set(0,'CurrentFigure',perimeter2Fig)
 legend(legendList)
 xlabel('perimeter(normalised by swPerimeter)')
 ylabel('probability')
-xlim([0 12])
+xlim([0 20])
 figurename = 'figures/perimeter2';
 if saveResults
     exportfig(perimeter2Fig,[figurename '.eps'],exportOptions)
