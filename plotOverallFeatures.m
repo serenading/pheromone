@@ -10,12 +10,12 @@ exportOptions = struct('Format','eps2',...
     'LineWidth',3);
 
 %% set parameters
-strains = {'npr1','N2','daf22_npr1','daf22',}; % {'N2','npr1','daf22','daf22_npr1'}
+strains = {'npr1','daf22_npr1','N2','daf22',}; % {'N2','npr1','daf22','daf22_npr1'}
 numSampleSkel = 500; % number of skeletons (per file) to sample in order to determine overall skeleton lengths for normalisation
 areaCutOff = 8;
-perimeterCutOff = 3;
+perimeterCutOff = 3.5;
 
-saveResults = false;
+saveResults = true;
 
 %% initialise
 swLengthFig = figure; hold on
@@ -89,8 +89,8 @@ for strainCtr = 1:length(strains)
         end
         
         %% normalise area and perimeter from this movie with sw features from this movie; store value for threshold box plot later
-        perimeterThres.(strains{strainCtr})(fileCtr) = numel(find(perimeter{fileCtr}/median(swPerimeters.(strains{strainCtr})(fileCtr,:))>perimeterCutOff));
-        areaThres.(strains{strainCtr})(fileCtr) = numel(find(area{fileCtr}/median(swAreas.(strains{strainCtr})(fileCtr,:))>areaCutOff));
+        perimeterThres.(strains{strainCtr})(fileCtr) = numel(find(perimeter{fileCtr}/median(swPerimeters.(strains{strainCtr})(fileCtr,:))>perimeterCutOff))/numel(perimeter{fileCtr});
+        areaThres.(strains{strainCtr})(fileCtr) = numel(find(area{fileCtr}/median(swAreas.(strains{strainCtr})(fileCtr,:))>areaCutOff))/numel(area{fileCtr});
     end
     
     %% pool data across movies
