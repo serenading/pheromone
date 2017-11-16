@@ -13,9 +13,9 @@ exportOptions = struct('Format','eps2',...
 strains = {'npr1','N2','daf22_npr1','daf22',}; % {'N2','npr1','daf22','daf22_npr1'}
 numSampleSkel = 500; % number of skeletons (per file) to sample in order to determine overall skeleton lengths for normalisation
 areaCutOff = 8;
-perimeterCutOff = 3;
+perimeterCutOff = 4.5;
 
-saveResults = false;
+saveResults = true;
 
 %% initialise
 swLengthFig = figure; hold on
@@ -122,6 +122,7 @@ for strainCtr = 1:length(strains)
 end
 
 
+
 %% format and save figures
 if numel(strains) == 4
     boxplotGroup = [ones(size(perimeterThres.(strains{1}))) 2*ones(size(perimeterThres.(strains{2}))) 3*ones(size(perimeterThres.(strains{3}))) 4*ones(size(perimeterThres.(strains{4})))];
@@ -145,7 +146,6 @@ if numel(strains) == 4
     if saveResults
         exportfig(areaThresholdFig,[figurename '.eps'],exportOptions)
         system(['epstopdf ' figurename '.eps']);
-        system(['rm ' figurename '.eps']);
     end
 else
     warning('fix strain list for threshold box plots')
