@@ -4,9 +4,10 @@ close all
 %%% to consider: plot perimeterNorm/areaNorm by strain with error bars...
 %%% (normalised file by file so each movie is a separate replicate to provide variation), ...
 %%% rather than pooling everything together across movies and plot a single line for each strain
-%%% - currently not working properly with overlaid shadedErrorBars
+%%% - currently not working properly with overlaid shadedErrorBars, needs
+%%% debugging
 
-%%% phase-restrict movies to joining phase only
+%%% phase-restrict movies to joining phase only?
 
 exportOptions = struct('Format','eps2',...
     'Color','rgb',...
@@ -20,8 +21,8 @@ exportOptions = struct('Format','eps2',...
 strains = {'npr1','daf22_npr1','N2','daf22',}; % {'N2','npr1','daf22','daf22_npr1'}
 numSampleSkel = 500; % number of skeletons (per file) to sample in order to determine overall skeleton lengths for normalisation
 areaCutOff = 5; % 5 seems good
-perimeterCutOff = 2.5; % 2.5 seems good
-saveResults = true;
+perimeterCutOff = 2.5; % 2 or 2.5 seems good
+saveResults = false;
 
 %% initialise
 swLengthFig = figure; hold on
@@ -30,8 +31,6 @@ swPerimeterFig = figure; hold on
 swAreaFig = figure; hold on
 perimeterFig = figure; hold on
 areaFig = figure; hold on
-perimeterThresholdFig = figure;
-areaThresholdFig = figure;
 
 %% go through strains, densities, movies
 for strainCtr = 1:length(strains)
@@ -151,61 +150,64 @@ for strainCtr = 1:length(strains)
     set(0,'CurrentFigure',areaFig)
     histogram(area.(strains{strainCtr}),'Normalization','pdf','DisplayStyle','stairs')
 end
-
-%% plot probability above threshold (per movie replicate)
-% generate group series for box plots
-boxplotGroup = [ones(size(perimeterThres.(strains{1}))) 2*ones(size(perimeterThres.(strains{2}))) 3*ones(size(perimeterThres.(strains{3}))) 4*ones(size(perimeterThres.(strains{4})))];
-% perimeter
-set(0,'CurrentFigure',perimeterThresholdFig)
-boxplot([perimeterThres.(strains{1}),perimeterThres.(strains{2}),perimeterThres.(strains{3}),perimeterThres.(strains{4})],boxplotGroup,'notch','on','labels',legendList);
-title('perimeter')
-ylabel('probability')
-set(perimeterThresholdFig,'PaperUnits','centimeters')
-figurename = ['figures/perimeterThreshold_' num2str(perimeterCutOff)];
-if saveResults
-    exportfig(perimeterThresholdFig,[figurename '.eps'],exportOptions)
-    system(['epstopdf ' figurename '.eps']);
-    system(['rm ' figurename '.eps']);
-end
-% area
-set(0,'CurrentFigure',areaThresholdFig)
-boxplot([areaThres.(strains{1}),areaThres.(strains{2}),areaThres.(strains{3}),areaThres.(strains{4})],boxplotGroup,'notch','on','labels',legendList);
-title('area')
-ylabel('probability')
-set(areaThresholdFig,'PaperUnits','centimeters')
-figurename = ['figures/areaThreshold_' num2str(areaCutOff)];
-if saveResults
-    exportfig(areaThresholdFig,[figurename '.eps'],exportOptions)
-    system(['epstopdf ' figurename '.eps']);
-    system(['rm ' figurename '.eps']);
-end
-
-    
-%% change legend format for the double mutant strain for subsequent plots
+   
+% change legend format for the double mutant strain for plot legends
 if strcmp(legendList{2},'daf22_npr1')
     legendList{2} = 'daf22\_npr1'; % add back slash so n doesn't become subscript
 else
     warning('need to rename daf22_npr1 to avoid subscript appearance in legend')
 end
 
-%% plot distribution (per movie replicate)
-% generate x axis series 
-perimeter_x = (1:size(perimeterHistCount.(strains{strainCtr}),2))/(size(perimeterHistCount.(strains{strainCtr}),2)/perimeterBinEdges(end));
-area_x = (1:size(areaHistCount.(strains{strainCtr}),2))/(size(areaHistCount.(strains{strainCtr}),2)/areaBinEdges(end));
-% perimeter
-figure; hold on
-pH(1) = shadedErrorBar(perimeter_x,perimeterHistCount.(strains{1}),{@mean,@std},'lineprops','-b','transparent',1);
-pH(2) = shadedErrorBar(perimeter_x,perimeterHistCount.(strains{2}),{@mean,@std},'lineprops','-r','transparent',1);
-pH(3) = shadedErrorBar(perimeter_x,perimeterHistCount.(strains{3}),{@mean,@std},'lineprops','-g','transparent',1);
-pH(4) = shadedErrorBar(perimeter_x,perimeterHistCount.(strains{4}),{@mean,@std},'lineprops','-k','transparent',1);
-legend([pH(1).mainLine, pH(2).mainLine,pH(3).mainLine,pH(4).mainLine],strains{1},strains{2},strains{3},strains{4})
-% area
-figure; hold on
-aH(1) = shadedErrorBar(area_x,areaHistCount.(strains{1}),{@mean,@std},'lineprops','-b','transparent',1);
-aH(2) = shadedErrorBar(area_x,areaHistCount.(strains{2}),{@mean,@std},'lineprops','-r','transparent',1);
-aH(3) = shadedErrorBar(area_x,areaHistCount.(strains{3}),{@mean,@std},'lineprops','-g','transparent',1);
-aH(4) = shadedErrorBar(area_x,areaHistCount.(strains{4}),{@mean,@std},'lineprops','-k','transparent',1);
-legend([aH(1).mainLine, aH(2).mainLine,aH(3).mainLine,aH(4).mainLine],strains{1},strains{2},strains{3},strains{4})
+%% plot probability above threshold values as violin plots (per movie replicate)
+% perimeter violin plot
+perimeterThresCell{1}=perimeterThres.(strains{1});
+perimeterThresCell{2}=perimeterThres.(strains{2});
+perimeterThresCell{3}=perimeterThres.(strains{3});
+perimeterThresCell{4}=perimeterThres.(strains{4});
+figure;violin(perimeterThresCell,'xlabel',legendList,'facecolor','b');
+ylabel(['P(norm. perimeter>' num2str(perimeterCutOff) ')'])
+perimeterViolinFig = gcf;
+figurename = ['figures/perimeterThresholdViolin_' num2str(perimeterCutOff)];
+if saveResults
+    exportfig(perimeterViolinFig,[figurename '.eps'],exportOptions)
+    system(['epstopdf ' figurename '.eps']);
+    system(['rm ' figurename '.eps']);
+end
+% area violin plot
+areaThresCell{1}=areaThres.(strains{1});
+areaThresCell{2}=areaThres.(strains{2});
+areaThresCell{3}=areaThres.(strains{3});
+areaThresCell{4}=areaThres.(strains{4});
+figure;violin(areaThresCell,'xlabel',legendList,'facecolor','b');
+ylabel(['P(norm. area>' num2str(areaCutOff) ')'])
+areaViolinFig = gcf;
+figurename = ['figures/areaThresholdViolin_' num2str(areaCutOff)];
+if saveResults
+    exportfig(areaViolinFig,[figurename '.eps'],exportOptions)
+    system(['epstopdf ' figurename '.eps']);
+    system(['rm ' figurename '.eps']);
+end
+
+% %% plot distribution (per movie replicate)
+% % generate x axis series 
+% perimeter_x = (1:size(perimeterHistCount.(strains{strainCtr}),2))/(size(perimeterHistCount.(strains{strainCtr}),2)/perimeterBinEdges(end));
+% area_x = (1:size(areaHistCount.(strains{strainCtr}),2))/(size(areaHistCount.(strains{strainCtr}),2)/areaBinEdges(end));
+% % perimeter
+% figure; hold on
+% pH(1) = shadedErrorBar(perimeter_x,perimeterHistCount.(strains{1}),{@mean,@std},'lineprops','-b','transparent',1);
+% pH(2) = shadedErrorBar(perimeter_x,perimeterHistCount.(strains{2}),{@mean,@std},'lineprops','-r','transparent',1);
+% pH(3) = shadedErrorBar(perimeter_x,perimeterHistCount.(strains{3}),{@mean,@std},'lineprops','-g','transparent',1);
+% pH(4) = shadedErrorBar(perimeter_x,perimeterHistCount.(strains{4}),{@mean,@std},'lineprops','-k','transparent',1);
+% legend([pH(1).mainLine, pH(2).mainLine,pH(3).mainLine,pH(4).mainLine],legendList{1},legendList{2},legendList{3},legendList{4})
+% title('perimeter distribution')
+% % area
+% figure; hold on
+% aH(1) = shadedErrorBar(area_x,areaHistCount.(strains{1}),{@mean,@std},'lineprops','-b','transparent',1);
+% aH(2) = shadedErrorBar(area_x,areaHistCount.(strains{2}),{@mean,@std},'lineprops','-r','transparent',1);
+% aH(3) = shadedErrorBar(area_x,areaHistCount.(strains{3}),{@mean,@std},'lineprops','-g','transparent',1);
+% aH(4) = shadedErrorBar(area_x,areaHistCount.(strains{4}),{@mean,@std},'lineprops','-k','transparent',1);
+% legend([aH(1).mainLine, aH(2).mainLine,aH(3).mainLine,aH(4).mainLine],legendList{1},legendList{2},legendList{3},legendList{4})
+% title('area distribution')
 
 %% format distribution plots (pooled across movies)
 % perimeter
