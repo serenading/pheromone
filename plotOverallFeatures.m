@@ -7,7 +7,9 @@ close all
 %%% - currently not working properly with overlaid shadedErrorBars, needs
 %%% debugging
 
-%%% phase-restrict movies to joining phase only?
+%%% phase-restrict movies to joining phase only? currently using full 1hr
+%%% movie. Not phase-restricting may make future screening-based analysis
+%%% easier as to avoid having to manually label the phases. 
 
 exportOptions = struct('Format','eps2',...
     'Color','rgb',...
