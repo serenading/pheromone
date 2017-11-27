@@ -5,7 +5,7 @@ close all
 %%% movie. Not phase-restricting may make future screening-based analysis
 %%% easier as to avoid having to manually label the phases. 
 
-%% script reads area and perimeter features files, normalises multi-worm blob features using single-worm features, and plots various visualisations of the data
+%% script reads area and perimeter features files and plots various visualisatio
 
 exportOptions = struct('Format','eps2',...
     'Color','rgb',...
