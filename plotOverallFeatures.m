@@ -1,12 +1,6 @@
 clear
 close all
 
-%%% to consider: plot perimeterNorm/areaNorm by strain with error bars...
-%%% (normalised file by file so each movie is a separate replicate to provide variation), ...
-%%% rather than pooling everything together across movies and plot a single line for each strain
-%%% - currently not working properly with overlaid shadedErrorBars, needs
-%%% debugging
-
 %%% phase-restrict movies to joining phase only? currently using full 1hr
 %%% movie. Not phase-restricting may make future screening-based analysis
 %%% easier as to avoid having to manually label the phases. 
@@ -23,7 +17,7 @@ exportOptions = struct('Format','eps2',...
 strains = {'npr1','daf22_npr1','N2','daf22',}; % {'N2','npr1','daf22','daf22_npr1'}
 numSampleSkel = 500; % number of skeletons (per file) to sample in order to determine overall skeleton lengths for normalisation
 areaCutOff = 5; % 5 seems good
-perimeterCutOff = 2.5; % 2 or 2.5 seems good
+perimeterCutOff = 2; % 2 or 2.5 seems good
 saveResults = false;
 
 %% initialise
@@ -167,7 +161,8 @@ perimeterThresCell{2}=perimeterThres.(strains{2});
 perimeterThresCell{3}=perimeterThres.(strains{3});
 perimeterThresCell{4}=perimeterThres.(strains{4});
 figure;violin(perimeterThresCell,'xlabel',legendList,'facecolor','b');
-ylabel(['P(norm. perimeter>' num2str(perimeterCutOff) ')'])
+ylabel(['P(relative perimeter>' num2str(perimeterCutOff) ')'])
+ylim([-0.1 0.8])
 perimeterViolinFig = gcf;
 figurename = ['figures/perimeterThresholdViolin_' num2str(perimeterCutOff)];
 if saveResults
@@ -181,7 +176,8 @@ areaThresCell{2}=areaThres.(strains{2});
 areaThresCell{3}=areaThres.(strains{3});
 areaThresCell{4}=areaThres.(strains{4});
 figure;violin(areaThresCell,'xlabel',legendList,'facecolor','b');
-ylabel(['P(norm. area>' num2str(areaCutOff) ')'])
+ylabel(['P(relative area>' num2str(areaCutOff) ')'])
+ylim([-0.1 0.8])
 areaViolinFig = gcf;
 figurename = ['figures/areaThresholdViolin_' num2str(areaCutOff)];
 if saveResults
