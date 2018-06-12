@@ -14,24 +14,24 @@ clear
 
 dataset = 'long'; % 'short' or 'long'
 strains = {'daf22_npr1','daf22','npr1','N2'};
-sampleEveryNSec = 30;  % in seconds
+sampleEveryNSec = 120;  % in seconds
 dafblobAreaThreshold = 2000;
 nondafBlobAreaThreshold = 3000; % single worm area ~ 500
 plotVisualisation = true;
 saveCentroidValues = false;
 plotCentroidSpeeds = false;
 plotMeanSquaredDisplacement = false;
-makeDownSampledVideo = true;
+makeDownSampledVideo = false;
 
 if strcmp(dataset,'long')
-    maxSeg = 9;
+    maxSeg = 15; % maximum number of 1-hour recordings
 elseif strcmp(dataset,'short')
-    maxSeg = 2;
+    maxSeg = 2; % maximum number of 1-hour recordings
 end
 
 if plotVisualisation
     plotCentroid = false;
-    plotFoodContour = false;
+    plotFoodContour = true;
 end
 
 if plotCentroidSpeeds || plotMeanSquaredDisplacement
@@ -66,7 +66,16 @@ addpath('auxiliary/')
 
 for strainCtr = 1:length(strains)
     if strcmp(dataset,'long')
-        [annotationNum,annotationFilenames,~] = xlsread('datalist/pheromoneLong.xlsx',strainCtr,'A1:E12','basic');
+        [annotationNum,annotationFilenames,~] = xlsread('datalist/pheromoneLong.xlsx',strainCtr,'A1:E200','basic');
+        % xy coordinates and radius of food contour obtained by hand annotation using VGG
+        foodCtnCoords_xyr.daf22_npr1 = [1009,935,406;1023,993,429;975,1083,427;998,981,392;...
+            1080,1068,409;1175,923,422;1077,993,419;1132,980,395];
+        foodCtnCoords_xyr.daf22 = [1118,1060,412;1134,924,397;1059,1017,413;1149,912,409;...
+            1019,1057,387;1058,1039,397;1090,904,396;1092,1042,399];
+        foodCtnCoords_xyr.npr1 = [1166,926,421;993,876,422;951,783,403;900,875,383;...
+            963,915,428;980,1115,399;1085,1112,411;1204,858,396];
+        foodCtnCoords_xyr.N2 = [1097,1008,406;996,1077,425;1053,948,402;1212,936,398;...
+            1032,1043,427;1182,1038,396;940,1027,426;1247,864,401];
     elseif strcmp(dataset,'short')
         [annotationNum,annotationFilenames,~] = xlsread('datalist/pheromoneTwoHours.xlsx',strainCtr,'A1:E12','basic');
         % xy coordinates and radius of food contour obtained by hand annotation using VGG
@@ -87,14 +96,14 @@ for strainCtr = 1:length(strains)
         end
         totalFrames = 0;
         totalSegs = 0;
-        for segCtr = 1:maxSeg % go through each hour of the recording replicate (2 hours maximum)
+        for segCtr = 1:max(annotationNum(:,2)) % go through each hour of the recording replicate
             fileIdx = find(annotationNum(:,1) == fileCtr & annotationNum(:,2) == segCtr);
             firstFrame{segCtr} = annotationNum(fileIdx,4)+1; % +1 to adjust for python 0 indexing
             lastFrame{segCtr} = annotationNum(fileIdx,5)+1;
-            filename{segCtr} = annotationFilenames{fileIdx};
             if lastFrame{segCtr} - firstFrame{segCtr} > 0 % if this recording has any valid frames
                 totalFrames = totalFrames+lastFrame{segCtr}-firstFrame{segCtr}+1;
                 totalSegs = totalSegs+1;
+                filename{segCtr} = annotationFilenames{fileIdx};
             end
         end
         totalSampleFrames = ceil(totalFrames/sampleEveryNSec/25);
@@ -108,8 +117,6 @@ for strainCtr = 1:length(strains)
         
         for segCtr = 1:totalSegs
             % load data
-            %skelFilename = strrep(strrep(filename{segCtr},'MaskedVideos','Results'),'.hdf5','_skeletons.hdf5');
-            %trajData = h5read(skelFilename,'/trajectories_data');
             fileInfo = h5info(filename{segCtr});
             dims = fileInfo.Datasets(2).Dataspace.Size;
             if leftoverFrames>0
@@ -126,7 +133,7 @@ for strainCtr = 1:length(strains)
                     writeVideo(video,imageFrame); %write the image to file
                 end
                 % generate binary segmentation based on black/white contrast
-                binaryImage = imageFrame>0 & imageFrame<100;
+                binaryImage = imageFrame>0 & imageFrame<70;
                 binaryImage = imfill(binaryImage, 'holes');
                 % filter by blob size
                 blobMeasurements = regionprops(binaryImage, 'Area','Centroid','Solidity');
@@ -138,9 +145,12 @@ for strainCtr = 1:length(strains)
                 end
                 blobLogInd = blobLogInd & blobCentroidsCoords(2,:) > 250; % get rid of the annoying box at the edge
                 % restrict to blobs near the food patch centre (within 500 pixels or 5 mm)
-                if strcmp(strains{strainCtr},'daf22_npr1')
-                    blobLogInd = blobLogInd & blobCentroidsCoords(1,:)<foodCtnCoords_xyr(fileCtr,1)+500 & blobCentroidsCoords(1,:)>foodCtnCoords_xyr(fileCtr,1)-500;
-                    blobLogInd = blobLogInd & blobCentroidsCoords(2,:)<foodCtnCoords_xyr(fileCtr,2)+500 & blobCentroidsCoords(2,:)>foodCtnCoords_xyr(fileCtr,2)-500;
+                if strcmp(dataset,'short') & strcmp(strains{strainCtr},'daf22_npr1')
+                   blobLogInd = blobLogInd & blobCentroidsCoords(1,:)<foodCtnCoords_xyr(fileCtr,1)+500 & blobCentroidsCoords(1,:)>foodCtnCoords_xyr(fileCtr,1)-500;
+                   blobLogInd = blobLogInd & blobCentroidsCoords(2,:)<foodCtnCoords_xyr(fileCtr,2)+500 & blobCentroidsCoords(2,:)>foodCtnCoords_xyr(fileCtr,2)-500;
+                elseif strcmp(dataset,'long')
+                    blobLogInd = blobLogInd & blobCentroidsCoords(1,:)<foodCtnCoords_xyr.(strains{strainCtr})(fileCtr,1)+500 & blobCentroidsCoords(1,:)>foodCtnCoords_xyr.(strains{strainCtr})(fileCtr,1)-500;
+                    blobLogInd = blobLogInd & blobCentroidsCoords(2,:)<foodCtnCoords_xyr.(strains{strainCtr})(fileCtr,2)+500 & blobCentroidsCoords(2,:)>foodCtnCoords_xyr.(strains{strainCtr})(fileCtr,2)-500;
                 end
                 blobBoundaries = bwboundaries(binaryImage,8,'noholes');
                 if plotVisualisation
@@ -178,25 +188,28 @@ for strainCtr = 1:length(strains)
             colorbar
             caxis([0 ceil(totalFrames/25/60)])
             cb = colorbar; cb.Label.String = 'minutes';
-            xlim([0 20]);
-            ylim([0 20]);
-            xticks([0:4:20])
-            yticks([0:4:20])
-            if strcmp(strains{strainCtr},'daf22_npr1')
+            if strcmp(dataset,'short') & strcmp(strains{strainCtr},'daf22_npr1')
                 xmax = round(foodCtnCoords_xyr(fileCtr,2)*pixelsize/1000+5);
                 xmin = round(foodCtnCoords_xyr(fileCtr,2)*pixelsize/1000-5);
                 ymax = round(foodCtnCoords_xyr(fileCtr,1)*pixelsize/1000+5);
                 ymin = round(foodCtnCoords_xyr(fileCtr,1)*pixelsize/1000-5);
-                xlim([xmin xmax])
-                ylim([ymin ymax])
-                xticks(xmin:2:xmax)
-                yticks(ymin:2:ymax)
+            elseif strcmp(dataset,'long')
+                xmax = round(foodCtnCoords_xyr.(strains{strainCtr})(fileCtr,2)*pixelsize/1000+5);
+                xmin = round(foodCtnCoords_xyr.(strains{strainCtr})(fileCtr,2)*pixelsize/1000-5);
+                ymax = round(foodCtnCoords_xyr.(strains{strainCtr})(fileCtr,1)*pixelsize/1000+5);
+                ymin = round(foodCtnCoords_xyr.(strains{strainCtr})(fileCtr,1)*pixelsize/1000-5);
             end
+            xlim([xmin xmax])
+            ylim([ymin ymax])
+            xticks(xmin:2:xmax)
+            yticks(ymin:2:ymax)
             xlabel('x (mm)')
             ylabel('y (mm)')
-            if strcmp(strains{strainCtr},'daf22_npr1')
-                if plotFoodContour
+            if plotFoodContour
+                if strcmp(dataset,'short') &strcmp(strains{strainCtr},'daf22_npr1')
                     viscircles([foodCtnCoords_xyr(fileCtr,2),foodCtnCoords_xyr(fileCtr,1)]*pixelsize/1000,foodCtnCoords_xyr(fileCtr,3)*pixelsize/1000,'Color','k','LineStyle','--','LineWidth',1);
+                elseif strcmp(dataset,'long')
+                    viscircles([foodCtnCoords_xyr.(strains{strainCtr})(fileCtr,2),foodCtnCoords_xyr.(strains{strainCtr})(fileCtr,1)]*pixelsize/1000,foodCtnCoords_xyr.(strains{strainCtr})(fileCtr,3)*pixelsize/1000,'Color','k','LineStyle','--','LineWidth',1);
                 end
             end
             % export figure
@@ -255,16 +268,16 @@ for strainCtr = 1:length(strains)
     % save cluster centroid coordinates and speeds
     
     if saveCentroidValues
-        save(['figures/sweeping/' strains{strainCtr} '_clusterCentroidSpeed_dataBFPhe_' dataset '_timeStep' num2str(sampleEveryNSec) '.mat'],'clusterCentroidSpeed');
-        save(['figures/sweeping/' strains{strainCtr} '_clusterCentroidCoords_dataBFPhe_' dataset '_timeStep' num2str(sampleEveryNSec) '.mat'],'clusterCentroidCoords');
-        save(['figures/sweeping/' strains{strainCtr} '_clusterCentroidSolidity_dataBFPhe_' dataset '_timeStep' num2str(sampleEveryNSec) '.mat'],'clusterSolidity');
-        save(['figures/sweeping/' strains{strainCtr} '_clusterCentroidArea_dataBFPhe_' dataset '_timeStep' num2str(sampleEveryNSec) '.mat'],'clusterArea');
+        save(['figures/sweeping/' strains{strainCtr} '_clusterCentroidSpeed_dataBFPhe_' dataset '_' strains{strainCtr} '_timeStep' num2str(sampleEveryNSec) '.mat'],'clusterCentroidSpeed');
+        save(['figures/sweeping/' strains{strainCtr} '_clusterCentroidCoords_dataBFPhe_' dataset '_' strains{strainCtr} '_timeStep' num2str(sampleEveryNSec) '.mat'],'clusterCentroidCoords');
+        save(['figures/sweeping/' strains{strainCtr} '_clusterCentroidSolidity_dataBFPhe_' dataset '_' strains{strainCtr} '_timeStep' num2str(sampleEveryNSec) '.mat'],'clusterSolidity');
+        save(['figures/sweeping/' strains{strainCtr} '_clusterCentroidArea_dataBFPhe_' dataset '_' strains{strainCtr} '_timeStep' num2str(sampleEveryNSec) '.mat'],'clusterArea');
     end
 end
 
-%% plot median speeds for different replicates (npr-1 only)
+%% plot median speeds for different replicates (npr-1 or daf-22;npr1 only)
 if plotCentroidSpeeds
-    load(['figures/sweeping/npr1_clusterCentroidSpeed_dataBFPhe_' dataset '_timeStep' num2str(sampleEveryNSec) '.mat'])
+    load(['figures/sweeping/npr1_clusterCentroidSpeed_dataBFPhe_' dataset '_' strains{strainCtr} '_timeStep' num2str(sampleEveryNSec) '.mat'])
     smoothSpeeds = NaN(numel(plotFileList),maxSeg*3600/sampleEveryNSec); % initialise
     recordingColors = distinguishable_colors(numel(plotFileList));
     legends = cell(1,numel(plotFileList));
